@@ -90,6 +90,7 @@ decade_summary
 
 Top 20 artists by total weeks on chart:
 ```{r}
+#ranked by total_weeks
 top20 <- combined_data |>
   summarise(
     total_weeks = sum(`weeks-on-board`, na.rm = TRUE),
@@ -101,6 +102,51 @@ top20 <- combined_data |>
   slice_head(n = 20)
 
 top20   
+```
+
+### Interpretation of the results
+
+
+Q: Do songs that reach #1 sound different from songs that don't?
+```{r}
+number_one_comparison <- combined_data |>
+    mutate(was_number_one = if_else(`peak-rank` == 1, "Yes", "No")) |>
+    summarise(
+        avg_energy = mean(energy, na.rm = TRUE),
+        avg_danceability = mean(danceability, na.rm = TRUE),
+        avg_valence = mean(valence, na.rm = TRUE),
+        avg_tempo = mean(tempo, na.rm = TRUE),
+        avg_loudness = mean(loudness, na.rm = TRUE),
+        song_count = n(),
+        .by = was_number_one
+    )
+
+number_one_comparison
+```
+
+### Interpretation of the results
+
+Most consistent artists (charted in multiple decades)
+
+```{r}
+#ranking by decades active first, then total weeks as tiebreaker
+
+consistent_artists <- combined_data |> 
+  mutate(decade = getDecade(date)) |>
+  summarise(
+    num_decades_appeared = n_distinct(decade), #in how many decades has artists appeared
+    avg_danceability = mean(danceability, na.rm = TRUE),
+    total_weeks = sum(`weeks-on-board`, na.rm = TRUE), #how many weeks artist was on charts across all their songs
+    best_rank = min(`peak-rank`, na.rm = TRUE),
+    songs_on_chart = n_distinct(song_clean),
+    .by = artist_clean
+  ) |>
+  filter(num_decades_appeared > 1) |>
+  arrange(desc(num_decades_appeared), desc(total_weeks)) |>
+  slice_head(n = 20)
+
+consistent_artists
+
 ```
 
 ### Interpretation of the results
