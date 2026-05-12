@@ -1,0 +1,92 @@
+---
+title: "Billboard Hot 100 & Spotify Audio Analysis"
+author: "Simona 
+format: html
+    embed-resources: true
+---
+
+Loading necessary libraries for data manipulation and date handling.
+```{r}
+library(readr)
+library(tidyverse)
+library(lubridate)
+library(stringr)
+```
+
+Loading and inspecting data.
+```{r}
+billboard <- read_csv("C:/Users/Simona Cholakova/Downloads/archive/charts.csv")
+spotify <- read_csv("C:/Users/Simona Cholakova/Downloads/archive (1)/dataset.csv")
+
+glimpse(billboard)
+glimpse(spotify)
+
+head(billboard)
+head(spotify)
+```
+
+Cleaning the data:
+```{r}
+billboard_clean <- billboard |>
+    mutate(
+        song_clean = str_to_lower(str_trim(song)),
+        artist_clean = str_to_lower(str_trim(artist))
+    )
+
+spotify_clean <- spotify |>
+    mutate(
+        song_clean = str_to_lower(str_trim(track_name)),
+        artist_clean = str_to_lower(str_trim(artists))
+    )
+```
+
+Joining the tables:
+```{r}
+combined_data <- billboard_clean |>
+    inner_join(spotify_clean, by = c("song_clean", "artist_clean"), relationship = "many-to-many") |>
+    distinct(song_clean, artist_clean, .keep_all = TRUE)
+
+nrow(combined_data)
+```
+
+Q: For each decade, what did the average popular song sound like?
+
+```{r}
+#Extract decade from date
+
+getDecade <- function(x){
+  year = year(as.Date(x))
+  decade = floor((year/10)) * 10
+  decade
+}
+```
+
+```{r}
+#Calculate average audio features for each decade
+
+decade_summary <- combined_data |>
+    mutate(decade = getDecade(date)) |>
+        summarise(
+            avg_danceability = mean(danceability, na.rm = TRUE),
+            avg_energy = mean(energy, na.rm = TRUE),
+            avg_valence = mean(valence, na.rm = TRUE),
+            avg_tempo = mean(tempo, na.rm = TRUE),
+            avg_loudness = mean(loudness, na.rm = TRUE),
+            avg_acousticness = mean(acousticness, na.rm = TRUE),
+            avg_instrumentalness = mean(instrumentalness, na.rm = TRUE),
+            avg_liveness = mean(liveness, na.rm = TRUE),
+            avg_speechiness = mean(speechiness, na.rm = TRUE),
+            avg_duration_ms = mean(duration_ms, na.rm = TRUE),
+            avg_key = mean(key, na.rm = TRUE),
+            avg_mode = mean(mode, na.rm = TRUE),
+            .by = decade
+        )
+```
+
+### Interpretation of the results
+
+
+```{r}
+
+```
+
