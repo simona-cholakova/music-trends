@@ -81,12 +81,27 @@ decade_summary <- combined_data |>
             avg_mode = mean(mode, na.rm = TRUE),
             .by = decade
         )
+
+decade_summary
 ```
 
 ### Interpretation of the results
 
 
+Top 20 artists by total weeks on chart:
 ```{r}
+top20 <- combined_data |>
+  summarise(
+    total_weeks = sum(`weeks-on-board`, na.rm = TRUE),
+    times_charted = n(),
+    best_rank = min(`peak-rank`, na.rm = TRUE),
+    .by = artist
+  ) |>
+  arrange(desc(total_weeks)) |>
+  slice_head(n = 20)
 
+top20   
 ```
+
+### Interpretation of the results
 
