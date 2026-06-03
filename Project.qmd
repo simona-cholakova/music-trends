@@ -1,32 +1,41 @@
 ---
 title: "Billboard Hot 100 & Spotify Audio Analysis"
-author: "Simona 
-format: html
+author: "Simona Cholakova"
+format:
+  html:
     embed-resources: true
 ---
 
-Loading necessary libraries for data manipulation and date handling.
+## Introduction 
+Music is a reflection of its time. What makes certain song a "hit" has changed drastically over the years, not just in genre, but in its actual sound and structure. What makes analyzing music trends so fascinating is that it can reveal how our tastes and culture have evolved.
+
+This project analyzes the Billboard Hot 100 chart data and Spotify audio features to uncover trends in popular music over time. The analysis includes examining how the average sound of popular songs has evolved across decades, identifying top artists based on their chart performance and exploring wheater songs that reached #1 have distinct audio characteristics compared to those songs that did not. Additionally, songs are classified into mood categories based on their audio features, and the impact of artist collaborations on chart performance is investigated. 
+
+## Data
 ```{r}
+#| include: false
+#| #Loading necessary libraries for data manipulation and date handling
 library(readr)
 library(tidyverse)
 library(lubridate)
 library(stringr)
 ```
 
-Loading and inspecting data.
+### Loading and inspecting data.
 ```{r}
+#| output: false
 billboard <- read_csv("C:/Users/Simona Cholakova/Downloads/archive/charts.csv")
 spotify <- read_csv("C:/Users/Simona Cholakova/Downloads/archive (1)/dataset.csv")
-
-glimpse(billboard)
-glimpse(spotify)
-
-head(billboard)
-head(spotify)
 ```
 
-Cleaning the data:
 ```{r}
+head(billboard) |> knitr::kable()
+head(spotify) |> knitr::kable()
+```
+
+### Cleaning the data:
+```{r}
+#| output: false
 billboard_clean <- billboard |>
     mutate(
         song_clean = str_to_lower(str_trim(song)),
@@ -40,20 +49,21 @@ spotify_clean <- spotify |>
     )
 ```
 
-Joining the tables:
+### Joining the tables:
 ```{r}
+#| output: false
 combined_data <- billboard_clean |>
     inner_join(spotify_clean, by = c("song_clean", "artist_clean"), relationship = "many-to-many") |>
     distinct(song_clean, artist_clean, .keep_all = TRUE)
-
-nrow(combined_data)
 ```
 
+## Transformation & Analysis
+
+### Average Sound by Decade
 Q: For each decade, what did the average popular song sound like?
 
 ```{r}
-#Extract decade from date
-
+#| output: false
 getDecade <- function(x){
   year = year(as.Date(x))
   decade = floor((year/10)) * 10
@@ -62,35 +72,29 @@ getDecade <- function(x){
 ```
 
 ```{r}
-#Calculate average audio features for each decade
-
 decade_summary <- combined_data |>
-    mutate(decade = getDecade(date)) |>
-        summarise(
-            avg_danceability = mean(danceability, na.rm = TRUE),
-            avg_energy = mean(energy, na.rm = TRUE),
-            avg_valence = mean(valence, na.rm = TRUE),
-            avg_tempo = mean(tempo, na.rm = TRUE),
-            avg_loudness = mean(loudness, na.rm = TRUE),
-            avg_acousticness = mean(acousticness, na.rm = TRUE),
-            avg_instrumentalness = mean(instrumentalness, na.rm = TRUE),
-            avg_liveness = mean(liveness, na.rm = TRUE),
-            avg_speechiness = mean(speechiness, na.rm = TRUE),
-            avg_duration_ms = mean(duration_ms, na.rm = TRUE),
-            avg_key = mean(key, na.rm = TRUE),
-            avg_mode = mean(mode, na.rm = TRUE),
-            .by = decade
-        )
+  mutate(decade = getDecade(date)) |>
+  summarise(
+    across(c(danceability, energy, valence, tempo, loudness, acousticness),
+           ~ mean(.x, na.rm = TRUE),
+           .names = "avg_{.col}"),
+    .by = decade
+  ) |>
+  arrange(decade)
 
-decade_summary
+decade_summary |> knitr::kable(digits = 3)
 ```
 
 ### Interpretation of the results
 
+Danceability and energy both increased from the 1950s through the 2000s, with energy peaking in the 2000s (0.767) before declining slightly in recent decades. Valence dropped consistently from 0.670 in the 1950s to 0.475 in the 2010s, suggesting popular music has become progressively darker over time. Acousticness fell sharply from 0.673 to 0.103 between the 1950s and 2000s, reflecting the shift to electronic production, with a slight recovery in the 2010s and 2020s. Loudness increased steadily across all decades, consistent with the well-known consistent with the well-documented ["loudness war"](https://hyperbits.com/loudness-war/) in music production. Tempo remained relatively stable throughout, staying between 118–127 BPM across all decades.
+
+Overall, popular music has grown louder, more energetic and darker in mood since the 1950s, with the 2000s marking a peak in production intensity before a slight return toward more acoustic and emotionally varied sounds in recent years.
+
+### Top 20 Artists
 
 Top 20 artists by total weeks on chart:
 ```{r}
-#ranked by total_weeks
 top20 <- combined_data |>
   summarise(
     total_weeks = sum(`weeks-on-board`, na.rm = TRUE),
@@ -101,11 +105,14 @@ top20 <- combined_data |>
   arrange(desc(total_weeks)) |>
   slice_head(n = 20)
 
-top20   
+top20 |> knitr::kable()
 ```
 
 ### Interpretation of the results
 
+Nickelback leads with 409 total weeks on the chart across 18 songs, followed closely by Imagine Dragons (397 weeks) and Linkin Park (335 weeks), suggesting that rock and alternative artists tend to have longer-lasting chart success than pop artists. Adele stands out as the highest charting pop artist with 304 weeks and a best rank of #1, while Ariana Grande and Billie Eilish represent the newer generation of artists in the top 20. Notably, having more songs on the chart does not always correlate with a higher peak rank, for example Daughtry charted 10 songs but never surpassed rank #4, while Dua Lipa charted only 6 songs yet reached #2. Overall, the list skews heavily toward rock and alternative artists, which may reflect the time period covered by the Billboard dataset rather than current trends.
+
+## Diferrences between #1 hits and other songs
 
 Q: Do songs that reach #1 sound different from songs that don't?
 ```{r}
@@ -121,33 +128,93 @@ number_one_comparison <- combined_data |>
         .by = was_number_one
     )
 
-number_one_comparison
+number_one_comparison |> knitr::kable(digits = 3)
 ```
 
 ### Interpretation of the results
 
-Most consistent artists (charted in multiple decades)
+Surprisingly, songs that reached #1 are actually slightly less energetic (0.593 vs 0.675) and quieter (-8.474 vs -7.264) than songs that did not, which goes against the common assumption that #1 hits are the most intense or polished tracks. However, #1 songs score higher on both danceability (0.598 vs 0.578) and valence (0.580 vs 0.546), suggesting they tend to be more positive and danceable rather than simply louder or more energetic. The tempo of #1 hits is also slightly lower on average (117 vs 123 BPM). Overall, the differences are relatively small, indicating that audio features alone are not a strong predictor of whether a song will reach #1.
+
+## Most consistent artists (charted in multiple decades)
 
 ```{r}
-#ranking by decades active first, then total weeks as tiebreaker
-
 consistent_artists <- combined_data |> 
   mutate(decade = getDecade(date)) |>
   summarise(
-    num_decades_appeared = n_distinct(decade), #in how many decades has artists appeared
+    num_decades_appeared = n_distinct(decade),
     avg_danceability = mean(danceability, na.rm = TRUE),
-    total_weeks = sum(`weeks-on-board`, na.rm = TRUE), #how many weeks artist was on charts across all their songs
+    total_weeks = sum(`weeks-on-board`, na.rm = TRUE),
     best_rank = min(`peak-rank`, na.rm = TRUE),
     songs_on_chart = n_distinct(song_clean),
     .by = artist_clean
   ) |>
   filter(num_decades_appeared > 1) |>
   arrange(desc(num_decades_appeared), desc(total_weeks)) |>
-  slice_head(n = 20)
+  slice_head(n = 20) |>
+  left_join(
+    combined_data |> distinct(artist_clean, artist),
+    by = "artist_clean"
+  ) |>
+  select(artist, everything(), -artist_clean)
 
-consistent_artists
-
+consistent_artists |> knitr::kable(digits = 2)
 ```
 
 ### Interpretation of the results
+
+Bon Jovi, the Bee Gees and Elvis Presley stand out as the only artists to have charted across 4 different decades, demonstrating exceptional longevity. The majority of the list spans 3 decades, including a diverse mix of classic rock legends like Aerosmith and Red Hot Chili Peppers alongside modern artists like Adele, Lady Gaga and Taylor Swift. Adele leads the 3-decade group with the most total weeks (304) and highest song count (14), while Metallica and Weezer appear despite never reaching #1, suggesting strong cult followings that sustained long chart careers. Overall, the most consistent artists tend to have lower average danceability scores, hinting that longevity on the charts may be more associated with rock and ballad-driven music than dance-oriented pop.
+
+## Song Mood Classification
+Classifying songs into mood categories
+
+```{r}
+combined_data <- combined_data |>
+    mutate(mood = case_when(
+        valence >= 0.6 & energy >= 0.6 ~ "Happy and Energetic",
+        valence >= 0.6 & energy < 0.6  ~ "Happy but Calm",
+        valence < 0.6  & energy >= 0.6 ~ "Dark and Energetic",
+        TRUE                            ~ "Dark and Calm"
+    ))
+
+combined_data |>
+  select(song, artist, valence, energy, mood) |>
+  head(50) |>
+  knitr::kable(digits = 3)
+```
+
+### Interpretation of the results 
+
+The mood classification reveals a clear dominance of darker toned songs in this sample, with "Dark and Energetic" and "Dark and Calm" appearing most frequently. Well known upbeat hits like Levitating by Dua Lipa and The Feels by TWICE are correctly classified as "Happy and Energetic", while emotionally heavy songs like Traitor and Happier by Olivia Rodrigo fall into "Dark and Calm" as expected, suggesting the classification is working as intended. Billie Eilish stands out with multiple songs in the dark categories, consistent with her signature moody sound. Interestingly, some songs that feel upbeat on the surface, such as Blinding Lights by The Weeknd, are classified as "Dark and Energetic" due to high energy but low valence, showing that the audio features capture emotional nuance beyond what song titles or artist reputation might suggest.
+
+## Solo vs. Collaboration Trends
+
+Artist Collaboration Analysis
+
+```{r}
+combined_data <- combined_data |>
+  mutate(artist_type = case_when(
+    str_detect(artist, regex("&|\\+|\\bx\\b", ignore_case = TRUE)) ~ "Collab",
+    TRUE ~ "Solo"
+  ))
+
+combined_data |>
+  summarise(
+    song_count = n(),
+    avg_weeks = mean(`weeks-on-board`, na.rm = TRUE),
+    avg_peak_rank = mean(`peak-rank`, na.rm = TRUE),
+    .by = artist_type
+  ) |>
+  knitr::kable(digits = 2)
+```
+
+### Interpretation of the results
+
+Collaborative acts slightly outperform solo artists in both average weeks on chart (17.94 vs 17.67) and average peak rank (25.68 vs 30.51, where a lower number means a higher chart position), suggesting that artist collaborations tend to reach higher chart positions and sustain chart presence marginally longer. However, with only 53 collaborative songs compared to 1961 solo entries, the sample size is too small to draw strong conclusions, so these differences should be interpreted with caution.
+
+## References
+https://hyperbits.com/ultimate-guide-to-the-loudness-war/ - for the loudness war explanation
+
+https://www.kaggle.com/datasets/dhruvildave/billboard-the-hot-100-songs
+
+https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset
 
