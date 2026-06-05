@@ -1,6 +1,7 @@
 ---
 title: "Billboard Hot 100 & Spotify Audio Analysis"
 author: "Simona Cholakova"
+date: "2026-06-05"
 format:
   html:
     embed-resources: true
@@ -9,7 +10,7 @@ format:
 ## Introduction 
 Music is a reflection of its time. What makes certain song a "hit" has changed drastically over the years, not just in genre, but in its actual sound and structure. What makes analyzing music trends so fascinating is that it can reveal how our tastes and culture have evolved.
 
-This project analyzes the Billboard Hot 100 chart data and Spotify audio features to uncover trends in popular music over time. The analysis includes examining how the average sound of popular songs has evolved across decades, identifying top artists based on their chart performance and exploring wheater songs that reached #1 have distinct audio characteristics compared to those songs that did not. Additionally, songs are classified into mood categories based on their audio features, and the impact of artist collaborations on chart performance is investigated. 
+This project analyzes the Billboard Hot 100 chart data and Spotify audio features to uncover trends in popular music over time. The Billboard dataset covers chart data from the 1950s through 2021, providing over seven decades of popular music history. The analysis includes examining how the average sound of popular songs has evolved across decades, identifying top artists based on their chart performance and exploring wheater songs that reached #1 have distinct audio characteristics compared to those songs that did not. Additionally, songs are classified into mood categories based on their audio features, and the impact of artist collaborations on chart performance is investigated. 
 
 ## Data
 ```{r}
@@ -19,9 +20,10 @@ library(readr)
 library(tidyverse)
 library(lubridate)
 library(stringr)
+library(ggplot2)
 ```
 
-### Loading and inspecting data.
+### Loading and inspecting data
 ```{r}
 #| output: false
 billboard <- read_csv("C:/Users/Simona Cholakova/Downloads/archive/charts.csv")
@@ -33,7 +35,7 @@ head(billboard) |> knitr::kable()
 head(spotify) |> knitr::kable()
 ```
 
-### Cleaning the data:
+### Cleaning the data
 ```{r}
 #| output: false
 billboard_clean <- billboard |>
@@ -49,7 +51,7 @@ spotify_clean <- spotify |>
     )
 ```
 
-### Joining the tables:
+### Joining the tables
 ```{r}
 #| output: false
 combined_data <- billboard_clean |>
@@ -60,7 +62,7 @@ combined_data <- billboard_clean |>
 ## Transformation & Analysis
 
 ### Average Sound by Decade
-Q: For each decade, what did the average popular song sound like?
+For each decade, what did the average popular song sound like?
 
 ```{r}
 #| output: false
@@ -87,13 +89,14 @@ decade_summary |> knitr::kable(digits = 3)
 
 ### Interpretation of the results
 
-Danceability and energy both increased from the 1950s through the 2000s, with energy peaking in the 2000s (0.767) before declining slightly in recent decades. Valence dropped consistently from 0.670 in the 1950s to 0.475 in the 2010s, suggesting popular music has become progressively darker over time. Acousticness fell sharply from 0.673 to 0.103 between the 1950s and 2000s, reflecting the shift to electronic production, with a slight recovery in the 2010s and 2020s. Loudness increased steadily across all decades, consistent with the well-known consistent with the well-documented ["loudness war"](https://hyperbits.com/loudness-war/) in music production. Tempo remained relatively stable throughout, staying between 118–127 BPM across all decades.
+Danceability and energy both increased from the 1950s through the 2000s, with energy peaking in the 2000s (0.767) before declining slightly in recent decades. Valence dropped consistently from 0.670 in the 1950s to 0.475 in the 2010s, suggesting popular music has become progressively darker over time. Acousticness fell sharply from 0.673 to 0.103 between the 1950s and 2000s, reflecting the shift to electronic production, with a slight recovery in the 2010s and 2020s. Loudness increased steadily across all decades, consistent with the well-known consistent with the well-documented ["loudness war"](https://hyperbits.com/ultimate-guide-to-the-loudness-war/) in music production. Tempo remained relatively stable throughout, staying between 118–127 BPM across all decades.
 
 Overall, popular music has grown louder, more energetic and darker in mood since the 1950s, with the 2000s marking a peak in production intensity before a slight return toward more acoustic and emotionally varied sounds in recent years.
 
 ### Top 20 Artists
 
-Top 20 artists by total weeks on chart:
+Which 20 artists were the most successful on the Billboard Hot 100 in terms of total weeks spent on the chart, and how do their audio features compare?
+
 ```{r}
 top20 <- combined_data |>
   summarise(
@@ -114,7 +117,7 @@ Nickelback leads with 409 total weeks on the chart across 18 songs, followed clo
 
 ## Diferrences between #1 hits and other songs
 
-Q: Do songs that reach #1 sound different from songs that don't?
+Do songs that reach #1 sound different from songs that don't?
 ```{r}
 number_one_comparison <- combined_data |>
     mutate(was_number_one = if_else(`peak-rank` == 1, "Yes", "No")) |>
@@ -136,6 +139,8 @@ number_one_comparison |> knitr::kable(digits = 3)
 Surprisingly, songs that reached #1 are actually slightly less energetic (0.593 vs 0.675) and quieter (-8.474 vs -7.264) than songs that did not, which goes against the common assumption that #1 hits are the most intense or polished tracks. However, #1 songs score higher on both danceability (0.598 vs 0.578) and valence (0.580 vs 0.546), suggesting they tend to be more positive and danceable rather than simply louder or more energetic. The tempo of #1 hits is also slightly lower on average (117 vs 123 BPM). Overall, the differences are relatively small, indicating that audio features alone are not a strong predictor of whether a song will reach #1.
 
 ## Most consistent artists (charted in multiple decades)
+
+Which artists have shown the most consistency by charting across multiple decades, and how do their audio features compare?
 
 ```{r}
 consistent_artists <- combined_data |> 
@@ -165,7 +170,8 @@ consistent_artists |> knitr::kable(digits = 2)
 Bon Jovi, the Bee Gees and Elvis Presley stand out as the only artists to have charted across 4 different decades, demonstrating exceptional longevity. The majority of the list spans 3 decades, including a diverse mix of classic rock legends like Aerosmith and Red Hot Chili Peppers alongside modern artists like Adele, Lady Gaga and Taylor Swift. Adele leads the 3-decade group with the most total weeks (304) and highest song count (14), while Metallica and Weezer appear despite never reaching #1, suggesting strong cult followings that sustained long chart careers. Overall, the most consistent artists tend to have lower average danceability scores, hinting that longevity on the charts may be more associated with rock and ballad-driven music than dance-oriented pop.
 
 ## Song Mood Classification
-Classifying songs into mood categories
+
+How can we classify the mood of songs based on their audio features?
 
 ```{r}
 combined_data <- combined_data |>
@@ -188,7 +194,7 @@ The mood classification reveals a clear dominance of darker toned songs in this 
 
 ## Solo vs. Collaboration Trends
 
-Artist Collaboration Analysis
+What are the differences in chart performance between solo artists and collaborations?
 
 ```{r}
 combined_data <- combined_data |>
@@ -211,10 +217,153 @@ combined_data |>
 
 Collaborative acts slightly outperform solo artists in both average weeks on chart (17.94 vs 17.67) and average peak rank (25.68 vs 30.51, where a lower number means a higher chart position), suggesting that artist collaborations tend to reach higher chart positions and sustain chart presence marginally longer. However, with only 53 collaborative songs compared to 1961 solo entries, the sample size is too small to draw strong conclusions, so these differences should be interpreted with caution.
 
+## Exploratory data analysis 
+
+### Plot 1: Audio Feature Trends by Decade 
+```{r}
+#| fig-width: 8
+#| fig-height: 7
+decade_long <- decade_summary |>
+  pivot_longer(
+    cols = starts_with("avg_"),
+    names_to = "feature",
+    names_prefix = "avg_",
+    values_to = "value"
+  ) |>
+  filter(feature %in% c("danceability", "energy", "valence", "acousticness"))
+
+ggplot(decade_long, aes(x = decade, y = value, color = feature)) +
+  geom_line() +
+  geom_point() +
+  labs(
+    title = "Average Audio Features by Decade",
+    x = "Decade",
+    y = "Average Score (0–1)",
+    color = "Feature"
+  ) +
+  theme_minimal()
+```
+
+#### Interpretation of the plot
+A **line chart** is used here because the x-axis is a continuous time variable (decade) and we want to show trends over time. It makes it easy to see how multiple features changed simultaneously across decades.
+Danceability and energy both rise steadily from the 1950s toward the 2000s, with energy peaking around 2000 before slightly declining. Acousticness shows the most dramatic drop from 0.67 in the 1950s to near 0.10 in the 2000s which reflects the shift from live, acoustic recordings to electronic production. Valence decreases over time, meaning popular music has become darker in mood over the decades. Overall, the 2000s appear to be a turning point, after which energy and acousticness begin to recover slightly.
+
+### Plot 2: Top 20 Artists by Total Weeks on Chart
+
+```{r}
+#| fig-width: 10
+#| fig-height: 8
+top20_plot <- top20 |>
+  mutate(artist = fct_reorder(artist, total_weeks))
+
+ggplot(top20_plot, aes(x = total_weeks, y = artist, fill = total_weeks)) +
+  geom_col(show.legend = FALSE) +
+  geom_text(aes(label = total_weeks), hjust = -0.2, size = 3.5) +
+  scale_fill_gradient(low = "#a8d8ea", high = "#2166ac") +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.1))) +
+  labs(
+    title = "Top 20 Artists by Total Weeks on the Billboard Hot 100",
+    subtitle = "Based on combined chart data joined with Spotify features",
+    x = "Total Weeks on Chart", y = NULL
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(plot.title = element_text(face = "bold"),
+        panel.grid.major.y = element_blank())
+```
+
+#### Interpretation of the plot
+A **horizontal bar chart** is used here because we are comparing a single numeric value (total weeks) across many categories (artists). The horizontal orientation makes the artist names readable without rotation, and ordering by value immediately shows the ranking.
+Nickelback leads with 409 total weeks, followed by Imagine Dragons (397) and Linkin Park (335). The dominance of rock and alternative artists at the top suggests these genres produce songs with longer-lasting chart presence compared to pop. Adele is the only pop artist in the top 5, standing out with 304 weeks.
+
+### Plot 3: Mood Distribution of Billboard Songs
+
+```{r}
+mood_counts <- combined_data |>
+  count(mood) |>
+  mutate(
+    pct   = n / sum(n),
+    label = paste0(mood, "\n", round(pct * 100, 1), "%")
+  )
+
+ggplot(mood_counts, aes(x = "", y = n, fill = mood)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  scale_fill_manual(values = c(
+    "Happy and Energetic" = "#f4d35e",
+    "Happy but Calm"      = "#a8d8ea",
+    "Dark and Energetic"  = "#ee6c4d",
+    "Dark and Calm"       = "#3d405b"
+  )) +
+  geom_text(aes(label = paste0(round(pct * 100, 1), "%")),
+            position = position_stack(vjust = 0.5),
+            color = "white", size = 4) +
+  labs(title = "Song Mood Distribution on the Billboard Hot 100",
+       fill = "Mood") +
+  theme_void() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5))
+```
+
+#### Interpretation of the plot
+A **pie chart** is used here because we are showing how a whole (all songs) is divided into parts (mood categories). It is suitable when there are a small number of categories and the goal is to compare proportions.
+Happy and Energetic is the most common mood at 33.3%, closely followed by Dark and Energetic at 31.1%. Dark and Calm accounts for 25%, while Happy but Calm is the least common at only 10.6%. This shows that the majority of Billboard hits lean toward high energy, regardless of whether they are emotionally positive or dark.
+
+### Plot 4: #1 Hits vs. Others — Audio Feature Comparison
+
+```{r}
+feature_comparison <- combined_data |>
+  mutate(was_number_one = if_else(`peak-rank` == 1, "#1 Hit", "Did Not Reach #1")) |>
+  select(was_number_one, danceability, energy, valence) |>
+  pivot_longer(cols = -was_number_one,
+               names_to = "feature", values_to = "value")
+
+ggplot(feature_comparison, aes(x = was_number_one, y = value, fill = was_number_one)) +
+  geom_boxplot(show.legend = FALSE) +
+  facet_wrap(~ feature) +
+  labs(
+    title = "Audio Features: #1 Hits vs. the Rest",
+    x = NULL,
+    y = "Value"
+  ) +
+  theme_minimal()
+```
+
+#### Interpretation of the plot
+A **boxplot** is used here because we are comparing the distribution of continuous audio features (danceability, energy, valence) across two groups (#1 hits vs. the rest). Unlike a bar chart showing only means, a boxplot also shows the median, spread, and outliers, giving a bigger picture of how the groups differ.
+Across all three features the differences between #1 hits and non-#1 songs are small, confirming that audio features alone are not strong predictors of chart  success. #1 hits show slightly higher valence and danceability medians, suggesting they tend to be more positive and danceable. Energy is slightly lower for #1 hits, which goes against the intuition that the most successful songs are the most intense.
+
+### Plot 5: Most Consistent Artists by Total Weeks and Decades Appeared
+
+```{r}
+#| fig-width: 10
+#| fig-height: 8
+ggplot(consistent_artists |> slice_head(n = 20),
+       aes(x = total_weeks, y = fct_reorder(artist, total_weeks),
+           color = factor(num_decades_appeared))) +
+  geom_point(size = 4) +
+  labs(
+    title = "Most Consistent Artists on the Billboard Hot 100",
+    x = "Total Weeks on Chart",
+    y = NULL,
+    color = "Decades Appeared"
+  ) +
+  theme_minimal()
+```
+
+#### Interpretation of the plot
+A **dot plot** is used here because we are comparing a continuous variable (total weeks on chart) across a ranked list of artists, while also encoding a second categorical variable (number of decades) through color. It is less cluttered than a bar chart for this type of comparison and makes individual values easy to read.
+Adele leads with the most total weeks (~304) despite appearing in only 3 decades, showing she accumulated chart time rapidly. Bon Jovi is the standout among 4-decade artists with ~251 weeks, while the Bee Gees and Elvis Presley also span 4 decades but have fewer weeks, likely because their peak activity predated the modern era of sustained chart tracking. Among the 3-decade artists, total weeks on chart varies widely, from around 80 weeks (Heart, Pearl Jam) to 304 weeks (Adele), showing that spanning multiple decades does not guarantee a high total chart presence.
+
+## Conclusion 
+This project explored how popular music has changed over the decades using Billboard Hot 100 chart data and Spotify audio features. The analysis showed that popular songs have become louder, more energetic, and darker in mood since the 1950s. Surprisingly, #1 hits are not necessarily the most intense tracks, they tend to score higher in danceability and positivity rather than energy or loudness. Artists with the longest chart careers are mostly from rock and alternative genres, and a small number of legends like Bon Jovi and Elvis Presley managed to chart across four different decades. Overall, while audio features can reveal interesting patterns, they alone cannot fully predict a song's success because chart performance is shaped by many factors beyond just how a song sounds.
+
 ## References
-https://hyperbits.com/ultimate-guide-to-the-loudness-war/ - for the loudness war explanation
+
+**Datasets:**
 
 https://www.kaggle.com/datasets/dhruvildave/billboard-the-hot-100-songs
 
 https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset
 
+**Loudness war:**
+
+https://hyperbits.com/ultimate-guide-to-the-loudness-war/ 
