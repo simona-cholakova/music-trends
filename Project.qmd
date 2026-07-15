@@ -24,15 +24,76 @@ library(ggplot2)
 ```
 
 ### Loading and inspecting data
-```{r}
+```{r}  
 #| output: false
-billboard <- read_csv("C:/Users/Simona Cholakova/Downloads/archive/charts.csv")
-spotify <- read_csv("C:/Users/Simona Cholakova/Downloads/archive (1)/dataset.csv")
+billboard <- read_csv("data/billboard/charts.csv")
+spotify <- read_csv("data/spotify/dataset.csv")
 ```
 
 ```{r}
 head(billboard) |> knitr::kable()
+```
+
+```{r}
+tibble(
+  Column = c("date", "rank", "song", "artist", "last-week", "peak-rank", "weeks-on-board"),
+  Type = c("date", "integer", "character", "character", "integer", "integer", "integer"),
+  Description = c(
+    "Date of the chart entry",
+    "Chart position that week (1 = highest, 100 = lowest)",
+    "Title of the song",
+    "Name of the artist(s)",
+    "Chart rank from the previous week",
+    "Highest rank the song has ever reached",
+    "Number of weeks the song has appeared on the Hot 100"
+  )
+) |> knitr::kable()
+```
+
+```{r}
 head(spotify) |> knitr::kable()
+```
+
+```{r}
+tibble(
+  Column = c("track_id", "artists", "album_name", "track_name", "popularity",
+             "duration_ms", "explicit", "danceability", "energy", "key",
+             "loudness", "mode", "speechiness", "acousticness",
+             "instrumentalness", "liveness", "valence", "tempo",
+             "time_signature", "track_genre"),
+  Type = c("character", "character", "character", "character", "integer",
+           "integer", "logical", "double", "double", "integer",
+           "double", "integer", "double", "double",
+           "double", "double", "double", "double",
+           "integer", "character"),
+  Unit = c("—", "—", "—", "—", "0–100",
+           "milliseconds", "TRUE/FALSE", "0.0–1.0", "0.0–1.0", "0–11",
+           "dB (–60 to 0)", "0 = minor, 1 = major", "0.0–1.0", "0.0–1.0",
+           "0.0–1.0", "0.0–1.0", "0.0–1.0", "BPM",
+           "beats per bar", "—"),
+  Description = c(
+    "Unique Spotify identifier for the track",
+    "Name of the artist(s)",
+    "Name of the album",
+    "Title of the song",
+    "Spotify popularity score (higher means more popular)",
+    "Length of the song",
+    "Whether the song contains explicit content",
+    "How suitable the track is for dancing",
+    "Perceptual measure of intensity and activity",
+    "Musical key (0 = C, 1 = C#, ... 11 = B)",
+    "Overall loudness of the track",
+    "Modality of the track",
+    "Presence of spoken words (>0.66 = speech, <0.33 = music)",
+    "Confidence that the track is acoustic",
+    "Predicts whether a track has no vocals",
+    "Detects presence of a live audience",
+    "Musical positiveness (higher = happier/more cheerful)",
+    "Estimated speed of the track",
+    "Estimated number of beats per bar",
+    "Genre label assigned to the track"
+  )
+) |> knitr::kable()
 ```
 
 ### Cleaning the data
@@ -360,10 +421,10 @@ This project explored how popular music has changed over the decades using Billb
 
 **Datasets:**
 
-https://www.kaggle.com/datasets/dhruvildave/billboard-the-hot-100-songs
+[Billboard Hot 100 Songs](https://www.kaggle.com/datasets/dhruvildave/billboard-the-hot-100-songs)
 
-https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset
+[Spotify Tracks Dataset](https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset)
 
-**Loudness war:**
+**Loudness War:**
 
-https://hyperbits.com/ultimate-guide-to-the-loudness-war/ 
+[Ultimate Guide to the Loudness War](https://hyperbits.com/ultimate-guide-to-the-loudness-war/)
