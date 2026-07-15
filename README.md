@@ -2,8 +2,6 @@
 
 ## Live Demo
 
-View the interactive report here:
-
 [View the interactive report](https://dataprog-music-trends.netlify.app/)
 
 ## Overview
